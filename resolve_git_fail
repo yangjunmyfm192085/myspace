@@ -1,0 +1,58 @@
+网上搜集：
+ 国内访问github的速度很慢且不稳定，当github上项目文件很多或者有几百M的大文件时，使用git clone下载到本地可能会经常失败，例如，报得比较常见的错误:
+
+    RPC failed; curl 56 GnuTLS recv error (-9): A TLS packet with unexpected length was received
+
+    RPC failed; curl 18 transfer closed with outstanding read data remaining
+
+    RPC failed; curl 56 GnuTLS recv error (-54): Error in the pull function
+
+对于第一个错误，可能是git版本需要更新，删除重新安装一下:
+
+    sudo apt-get purge git
+    sudo apt-get install git
+
+对于第二个错误，可能是缓冲区不够，加大缓冲区到500M #或者2G:
+
+   git config --global http.postBuffer  524288000     #2147483648
+
+做了上面的改动如果仍旧下载中途出错，下载速度很慢的话，可以试试设置：
+
+   git config --global http.lowSpeedLimit 0
+   git config --global http.lowSpeedTime 999999
+
+如果依旧clone失败，则首先浅层clone，然后更新远程库到本地：
+
+  git clone --depth=1 https://github.com/<repository_name>/<project_name>.git
+
+  下载完后，然后获取所有历史记录：
+
+   cd <project_name>
+
+   git fetch --unshallow
+
+     
+
+       如果上面的方式仍然经常中断下载，那就得换个协议了，一般地，使用ssh协议下载比https下载稳定多了，虽然也不能保证每次都能顺利完成全部下载，但是成功的可能性比git clone https方式高多了。步骤：
+
+   首先得生成个人的rsa key，Linux下执行命令:
+
+    ssh-keygen -t rsa -C "<你注册github账号的邮箱>"    # e.g.,    abc@126.com   
+
+    然后连续回车直至生成公钥和私钥文件，然后打开 ~/.ssh/id_rsa.pub，拷贝其内容，登录Github网站，到你自己的账号里的菜单里去设置:  Settings -> SSH and GPG keys 点 new SSH key后，将从id_rsa.pub文件里拷贝的内容贴到框里确认即可:
+
+      
+
+完后然后就可以执行
+
+     git clone git@github.com:<repository_name>/<project_name>.git了
+
+如果有时还是中断，可以先只clone一层后面再更新全部：
+
+     git clone --depth=1 <your_account_name>@github.com:<repository_name>/<project_name>.git
+
+下载完后，更新全部历史到本地：
+
+    cd <project_name>
+
+    git fetch --unshallow
